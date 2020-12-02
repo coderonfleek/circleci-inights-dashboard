@@ -6,13 +6,14 @@ const cors = require('cors');
 const axios = require("axios")
 
 
-app.use(cors())
+app.use(cors());
+
+app.use(bodyParser.urlencoded({ extended: false }));
 
 let port = process.env.PORT || "5000";
 
 const api_v1 = "https://circleci.com/api/v1.1/";
 const api_v2 = "https://circleci.com/api/v2/";
-//const api_token = "e08b677187020815e12ef5f1c47eeddde0421ed1";
 
 axios.defaults.headers.common['Circle-Token'] = process.env.API_KEY;
 
@@ -27,13 +28,35 @@ app.get("/getprojects", async (req, res) => {
     res.send(projects.data);
 });
 
-app.get("getpipelines/:project_slug", async (req, res) => {
+app.get("/getpipelines", async (req, res) => {
 
-    const project_slug = req.params.project_slug;
+    const project_slug = req.query.project_slug;
 
-    let pipelines = await axios.get(`${api_v1}projects`);
+    let pipelines = await axios.get(`${api_v2}project/${project_slug}/pipeline`);
 
     res.send(pipelines.data);
+})
+
+app.post("/triggerpipeline", async (req, res) => {
+
+    const project_slug = req.body.project_slug;
+
+    try {
+        const trigger = await axios.post(`${api_v2}project/${project_slug}/pipeline`);
+
+        res.send(trigger.data);
+    } catch (error) {
+        res.send(error)
+    }
+})
+
+app.get("/getworkflows/:pipeline_id", async (req, res) => {
+
+    const pipeline_id = req.params.pipeline_id;
+
+    let workflows = await axios.get(`${api_v2}pipeline/${pipeline_id}/workflow`);
+
+    res.send(workflows.data);
 })
 
 app.listen(port, () => {
