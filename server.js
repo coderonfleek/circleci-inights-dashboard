@@ -10,6 +10,7 @@ const axios = require("axios");
 app.use(cors());
 
 app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
 
 let port = process.env.PORT || "5000";
 

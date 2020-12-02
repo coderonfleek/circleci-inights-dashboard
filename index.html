@@ -10,7 +10,23 @@
     <title>Insights Dashboard</title>
 </head>
 <body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <a class="navbar-brand" href="/#">My CircleCI Pipelines Dashboard</a>
+        <button
+            class="navbar-toggler"
+            type="button"
+            data-toggle="collapse"
+            data-target="#navbarText"
+            aria-controls="navbarText"
+            aria-expanded="false"
+            aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon" />
+        </button>
+        
+    </nav>
     <div id="app">
+        
+
         <div class="container">
             <div class="row">
                 <div class="col-md-6" id="projects-section">
@@ -30,7 +46,9 @@
                         <h2>Pipelines <span class="text-primary">[{{selectedProject.reponame}}]</span></h2>
 
                         <p>
-
+                            <button @click="triggerPipeline()" type="button" class="btn btn-success" :disabled="triggeringProjectPipeline">
+                                {{triggeringProjectPipeline ? "Procesing" : "Trigger Pipeline"}}
+                            </button>
                         </p>
 
                         <p v-if="loadingPipelines">
@@ -39,7 +57,11 @@
                         <div v-else class="list-group" id="pipelines-section">
                             <a v-for="pipeline in pipelines" href="#" class="list-group-item list-group-item-action">
                               <div class="d-flex w-100 justify-content-between">
-                                <h5 class="mb-1">{{pipeline.number}}</h5>
+                                <h5 class="mb-1">
+                                    {{pipeline.number}} &nbsp;-&nbsp;
+                                    <span v-if="pipeline.state == 'errored'" class="text-danger">Failed</span>
+                                    <span v-else class="text-success">Passed</span>
+                                </h5>
                                 <small>{{pipeline.created_at.substring(0, 10)}}</small>
                               </div>
                               <p class="mb-1" v-if="pipeline.trigger">
@@ -66,7 +88,8 @@
                 projects: [],
                 selectedProject : {},
                 loadingPipelines : false,
-                pipelines : []
+                pipelines : [],
+                triggeringProjectPipeline : false
             },
             async created(){
 
@@ -90,6 +113,23 @@
                     this.pipelines = pipelines.data.items;
 
                     this.loadingPipelines = false;
+                },
+                triggerPipeline : async function () {
+                    
+                    this.triggeringProjectPipeline = true;
+
+                    let project = this.selectedProject;
+
+                    const project_slug = `${project.vcs_type}/${project.username}/${project.reponame}`;
+
+                    let trigger = await axios.post(`triggerpipeline`, {
+                        project_slug
+                    });
+                    console.log(trigger);
+
+                    this.loadPipelines(project);
+
+                    this.triggeringProjectPipeline = false;
                 }
             }
         })
