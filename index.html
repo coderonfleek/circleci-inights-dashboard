@@ -13,19 +13,45 @@
     <div id="app">
         <div class="container">
             <div class="row">
-                <div class="col-md-6">
-                    <ul id="list" class="list-group">
-                        <li class="list-group-item">Buy Groceries</li>
-                        <li class="list-group-item">Cook Meal</li>
+                <div class="col-md-6" id="projects-section">
+                    <p v-if="loadingProjects">
+                        <i>Loading Projects...</i>
+                    </p>
+                    <ul v-else id="list" class="list-group">
+                        <li class="list-group-item" v-for="project in projects" v-bind:class="{ active: selectedProject.reponame == project.reponame }" @click="loadPipelines(project)">
+                            {{project.reponame}}
+                        </li>
+                        
                     </ul>
                 </div>
     
                 <div class="col-md-6">
-                    <input class="form-control" id="newTask" placeholder="Enter New Task" />
-                    <br />
-                    <button type="button" class="btn btn-primary" onclick="addItem()">
-                        Add Task
-                    </button>
+                    <div v-if="selectedProject.reponame">
+                        <h2>Pipelines <span class="text-primary">[{{selectedProject.reponame}}]</span></h2>
+
+                        <p>
+
+                        </p>
+
+                        <p v-if="loadingPipelines">
+                            <i>Loading Pipelines</i>
+                        </p>
+                        <div v-else class="list-group" id="pipelines-section">
+                            <a v-for="pipeline in pipelines" href="#" class="list-group-item list-group-item-action">
+                              <div class="d-flex w-100 justify-content-between">
+                                <h5 class="mb-1">{{pipeline.number}}</h5>
+                                <small>{{pipeline.created_at.substring(0, 10)}}</small>
+                              </div>
+                              <p class="mb-1" v-if="pipeline.trigger">
+                                  Trigger Type: <span class="text-danger">{{pipeline.trigger.type}}</span> <br /> 
+                                  Recieved At: <span class="text-sucess">{{pipeline.trigger.received_at.substring(0, 10)}}</span> <br /> 
+                                  Triggered By: <span class="text-primary">{{pipeline.trigger.actor.login}}</span></p>
+                              <small>ID: {{pipeline.id}}</small>
+                            </a>
+                            
+                        </div>
+                    </div>
+                    
                 </div>
             </div>
         </div>
@@ -36,17 +62,47 @@
         var app = new Vue({
             el: '#app',
             data: {
-                message: 'Hello Vue!'
+                loadingProjects : false,
+                projects: [],
+                selectedProject : {},
+                loadingPipelines : false,
+                pipelines : []
             },
             async created(){
-                let projects = await axios.get(`${api_v2}project/gh/coderonfleek/node-azure-web-app/pipeline`);
 
-                console.log(projects)
+                this.loadingProjects = true;
+
+                let projects = await axios.get(`getprojects`);
+                this.projects = projects.data;
+
+                this.loadingProjects = false;
             },
             methods : {
-                
+                loadPipelines : async function (project) {
+                    this.selectedProject = project;
+
+                    this.loadingPipelines = true;
+
+                    const project_slug = `${project.vcs_type}/${project.username}/${project.reponame}`;
+
+                    let pipelines = await axios.get(`getpipelines?project_slug=${project_slug}`);
+                    console.log(pipelines);
+                    this.pipelines = pipelines.data.items;
+
+                    this.loadingPipelines = false;
+                }
             }
         })
     </script>
+
+    <style>
+        #app {
+            margin-top: 50px;
+        }
+        #projects-section, #pipelines-section{
+            height: 600px;
+            overflow: scroll;
+        }
+    </style>
 </body>
 </html>

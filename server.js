@@ -3,7 +3,8 @@ const express = require("express");
 const path = require("path");
 const app = express();
 const cors = require('cors');
-const axios = require("axios")
+let bodyParser = require("body-parser");
+const axios = require("axios");
 
 
 app.use(cors());
@@ -22,7 +23,7 @@ app.get("/", (req, res) => {
 });
 
 app.get("/getprojects", async (req, res) => {
-    //let projects = await axios.get(`${api_v2}project/gh/coderonfleek/node-azure-web-app/pipeline`);
+    
     let projects = await axios.get(`${api_v1}projects`);
 
     res.send(projects.data);
